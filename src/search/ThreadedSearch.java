@@ -32,6 +32,10 @@ public class ThreadedSearch<T> implements Runnable {
     * be how the threads you're about to create will "communicate". They
     * will all have access to this one shared instance of `Answer`, where
     * they can update the `answer` field inside that instance.
+	*/
+	Answer globalAnswer = new Answer();
+	globalAnswer.setAnswer(false);
+/*
     *
     * Then construct `numThreads` instances of this class (`ThreadedSearch`)
     * using the 5 argument constructor for the class. You'll hand each of
@@ -41,20 +45,51 @@ public class ThreadedSearch<T> implements Runnable {
     * of the list. If, for example, the list has length 100 and you have
     * 4 threads, you would give the four threads the ranges [0, 25), [25, 50),
     * [50, 75), and [75, 100) as their sections to search.
-    *
+*/
+	ArrayList<ThreadedSearch> TSArray = new ArrayList<ThreadedSearch>();
+	
+	int splitSize = list.size()/numThreads;
+	
+	for(int i=0;i<numThreads; i++){
+		int start = (splitSize*i);
+		int finish = (splitSize*(i+1));
+		ThreadedSearch ts = new ThreadedSearch(target, list, start, finish, globalAnswer);
+		TSArray.add(ts);
+	}
+	
+  /*  *
     * You then construct `numThreads`, each of which is given a different
     * instance of this class as its `Runnable`. Then start each of those
     * threads, wait for them to all terminate, and then return the answer
     * in the shared `Answer` instance.
     */
-    return false;
+	
+	   Thread[] threads = new Thread[numThreads];
+	   for (int i=0; i<numThreads; ++i) {
+	      threads[i] = new Thread(TSArray.get(i));
+	      threads[i].start();
+	   }
+
+	   // Wait for all the threads to finish
+	   for (int i=0; i<numThreads; ++i) {
+	      threads[i].join();
+	   }
+
+	   // return the answer in the shared `Answer` instance
+	   return globalAnswer.getAnswer();
+
   }
 
-  public void run() {
-
+public void run() {
+	for(int i=0; i<list.size(); i++){
+        if(list.get(i).equals(target)) {
+        	this.answer.setAnswer(true);
+        }
+    }
   }
 
-  private class Answer {
+
+private class Answer {
     private boolean answer = false;
 
     public boolean getAnswer() {
